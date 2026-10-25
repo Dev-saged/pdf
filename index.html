@@ -324,7 +324,7 @@ const CONFIG={
       {label:'المستودع',url:'https://github.com/Dev-saged/pdf',icon:'i-code',lh:195,lc:.12}
     ]
   },
-  version:'1.3.1',
+  version:'1.3.2',
   updateUrl:'https://raw.githubusercontent.com/Dev-saged/pdf/main/version.json',
   license:{expiry:null},      // 'YYYY-MM-DD' أو null
   cdn:{
@@ -596,7 +596,15 @@ const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h)h.f
 const icon=id=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','i');const u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#'+id);s.append(u);return s};
 let lastPhase='',lastParts=null;
 
-function download(p){const a=document.createElement('a');a.href=URL.createObjectURL(p.blob);a.download=p.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);buzz(15)}
+function download(p){
+  /* octet-stream يمنع فتح الملف في عارض PDF ويفرض التنزيل المباشر */
+  const url=URL.createObjectURL(new Blob([p.blob],{type:'application/octet-stream'}));
+  const a=document.createElement('a');
+  a.href=url;a.download=p.name;a.rel='noopener';a.style.display='none';
+  document.body.append(a);a.click();
+  setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},60000);
+  buzz(15);
+}
 async function share(p){
   const f=new File([p.blob],p.name,{type:p.blob.type});
   try{if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]});else download(p)}catch{}
