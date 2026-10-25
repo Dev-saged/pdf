@@ -72,6 +72,10 @@ input[type=file]{position:absolute;inline-size:1px;block-size:1px;opacity:0}
 .seg label:has(:focus-visible){outline:3px solid var(--primary);outline-offset:2px}
 .seg small{color:var(--mute);font-size:.75rem}
 .seg b{font-size:.92rem}
+.seg.two{grid-template-columns:repeat(2,1fr)}
+.box{display:grid;gap:14px}
+.est{color:var(--mute);font-size:.85rem;line-height:1.9;white-space:pre-line;direction:rtl}
+#tiers{transition:opacity .2s}
 .fld{display:grid;gap:6px;font-weight:500;font-size:.9rem}
 .fld small{color:var(--mute);font-weight:400}
 input[type=text],input[type=number]{font:inherit;color:inherit;inline-size:100%;min-block-size:48px;padding-inline:14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface-2);direction:ltr;text-align:start}
@@ -148,17 +152,28 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 
   <section class="card" id="opts" hidden>
     <div class="info"><svg class="i"><use href="#i-file"/></svg><div><b id="fName"></b><span id="fMeta"></span></div></div>
-    <div class="seg" id="presets" role="radiogroup" aria-label="قوة الضغط"></div>
+    <div class="seg two" id="modes" role="radiogroup" aria-label="وضع الضغط"></div>
+    <div class="box" id="smartBox">
+      <div class="seg" id="tiers" role="radiogroup" aria-label="مستوى الوضوح"></div>
+      <label class="fld">الحجم المستهدف الإجمالي (ميجا) <small>اختياري. تختار الأداة أعلى وضوح يناسب الحجم، ولا تنزل تحت حد الوضوح الآمن أبداً. إن لم يكفِ يُقسَّم الملف لأجزاء.</small>
+        <input type="number" id="targetMB" min="1" max="2000" inputmode="numeric" placeholder="بدون هدف">
+      </label>
+      <button class="btn" id="estBtn" type="button">قدّر الحجم قبل البدء</button>
+      <p class="est" id="est" hidden></p>
+    </div>
+    <div class="box" id="manualBox" hidden>
+      <div class="seg" id="presets" role="radiogroup" aria-label="قوة الضغط"></div>
+      <label class="sw"><span>تحويل لأبيض وأسود (حجم أصغر)</span><input type="checkbox" id="gray"></label>
+      <label class="fld"><span>أطول ضلع للصفحة: <b id="vSide"></b> px</span><input type="range" id="side" min="700" max="2400" step="100"></label>
+      <label class="fld"><span>جودة JPEG: <b id="vQ"></b>%</span><input type="range" id="q" min="20" max="90" step="5"></label>
+    </div>
     <label class="fld">الصفحات المطلوبة <small>اتركه فارغاً لكل الصفحات. مثال: 1-30, 45, 60-80</small>
       <input type="text" id="range" inputmode="text" autocomplete="off" placeholder="الكل">
     </label>
-    <label class="sw"><span>تحويل لأبيض وأسود (حجم أصغر)</span><input type="checkbox" id="gray"></label>
     <label class="sw"><span>ملف نص مرافق (.txt) للصفحات النصية</span><input type="checkbox" id="text"></label>
     <details>
-      <summary>خيارات متقدمة <svg class="i mir"><use href="#i-chev"/></svg></summary>
+      <summary>تقسيم الأجزاء <svg class="i mir"><use href="#i-chev"/></svg></summary>
       <div>
-        <label class="fld"><span>أطول ضلع للصفحة: <b id="vSide"></b> px</span><input type="range" id="side" min="700" max="2400" step="100"></label>
-        <label class="fld"><span>جودة JPEG: <b id="vQ"></b>%</span><input type="range" id="q" min="20" max="90" step="5"></label>
         <label class="fld">أقصى حجم للجزء (ميجا)<input type="number" id="maxMB" min="1" max="500" inputmode="numeric"></label>
         <label class="fld">أقصى عدد صفحات للجزء<input type="number" id="maxPages" min="1" max="1000" inputmode="numeric"></label>
       </div>
@@ -169,12 +184,14 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
   <section class="card" id="prog" hidden aria-live="polite">
     <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><i></i></div>
     <div class="stats"><span>صفحة <b id="pN">0</b> من <b id="pT">0</b></span><span>الحجم الحالي <b id="pS">0</b></span></div>
+    <p class="note" id="pLabel"></p>
     <button class="btn" id="cancel" type="button"><svg class="i"><use href="#i-x"/></svg>إلغاء</button>
   </section>
 
   <section class="card" id="res" hidden>
     <div class="big"><span id="rFrom"></span><em>←</em><span id="rTo"></span></div>
     <span class="save" id="rSave"></span>
+    <p class="note" id="rInfo"></p>
     <div id="parts" style="display:grid;gap:8px"></div>
     <button class="btn" id="again" type="button">ملف جديد</button>
   </section>
@@ -188,18 +205,27 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 /* ===== CONFIG ===== */
 const CONFIG={
   brand:{name:'ضاغط PDF',tagline:'صغّر كتابك ليُرفع بسهولة',hue:195},
-  version:'1.0.0',
+  version:'1.1.0',
   updateUrl:'https://raw.githubusercontent.com/Dev-saged/pdf/main/version.json',
   license:{expiry:null},      // 'YYYY-MM-DD' أو null
   cdn:{
     lib:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
     worker:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
   },
-  defaults:{preset:'strong',maxMB:25,maxPages:100},
+  defaults:{mode:'smart',tier:'balanced',targetMB:0,preset:'strong',maxMB:25,maxPages:100},
   presets:{
     strong:{label:'قوي',hint:'متوازن',maxSide:1600,q:.55},
     extreme:{label:'قوي جداً',hint:'أصغر',maxSide:1280,q:.45},
     max:{label:'أقصى',hint:'أدنى حجم',maxSide:1000,q:.35,gray:true}
+  },
+  smart:{
+    tiers:{
+      high:{label:'أعلى وضوح',hint:'للخط الدقيق',maxSide:1800,psnr:32,qmin:.8},
+      balanced:{label:'متوازن',hint:'موصى به',maxSide:1568,psnr:29,qmin:.72},
+      small:{label:'أصغر',hint:'أدنى حد آمن',maxSide:1400,psnr:26,qmin:.62}
+    },
+    order:['high','balanced','small'],
+    qmax:.92,colorPx:.0015,samples:5
   }
 };
 
@@ -214,12 +240,12 @@ const store=o=>{const subs=new Set();let q=0;
   return[p,f=>subs.add(f)]};
 const KEY='ppc.cfg';
 const loadCfg=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}};
-const saveCfg=()=>{try{const{preset,gray,text,maxSide,q,maxMB,maxPages}=cfg;localStorage.setItem(KEY,JSON.stringify({preset,gray,text,maxSide,q,maxMB,maxPages}))}catch{}};
+const saveCfg=()=>{try{const{mode,tier,targetMB,preset,gray,text,maxSide,q,maxMB,maxPages}=cfg;localStorage.setItem(KEY,JSON.stringify({mode,tier,targetMB,preset,gray,text,maxSide,q,maxMB,maxPages}))}catch{}};
 
 /* ===== الحالة ===== */
-const[S,sub]=store({phase:'idle',msg:'',name:'',size:0,total:0,done:0,bytes:0,parts:[]});
+const[S,sub]=store({phase:'idle',msg:'',name:'',size:0,total:0,done:0,bytes:0,parts:[],info:'',label:''});
 const D0=CONFIG.presets[CONFIG.defaults.preset];
-const cfg=Object.assign({preset:CONFIG.defaults.preset,gray:false,text:true,maxSide:D0.maxSide,q:D0.q*100,maxMB:CONFIG.defaults.maxMB,maxPages:CONFIG.defaults.maxPages,range:''},loadCfg());
+const cfg=Object.assign({mode:CONFIG.defaults.mode,tier:CONFIG.defaults.tier,targetMB:CONFIG.defaults.targetMB,preset:CONFIG.defaults.preset,gray:false,text:true,maxSide:D0.maxSide,q:D0.q*100,maxMB:CONFIG.defaults.maxMB,maxPages:CONFIG.defaults.maxPages,range:''},loadCfg());
 let doc=null,file=null,cancelled=false;
 
 /* ===== كاتب PDF ===== */
@@ -285,26 +311,89 @@ function eff(){
   return{maxSide:cfg.maxSide,q:cfg.q/100,gray:cfg.gray||!!(p&&p.gray&&cfg.preset!=='custom')};
 }
 
+/* ===== الضغط الذكي: وضوح مضمون ===== */
+const sc2=document.createElement('canvas'),sx2=sc2.getContext('2d',{willReadFrequently:true});
+async function decodeRGBA(blob,w,h){
+  const bmp=await createImageBitmap(blob);
+  sc2.width=w;sc2.height=h;sx2.drawImage(bmp,0,0);
+  if(bmp.close)bmp.close();
+  return sx2.getImageData(0,0,w,h).data;
+}
+function inkPsnr(lum,idx,dec){
+  let sum=0;
+  for(let j=0;j<idx.length;j++){
+    const p=idx[j],k=p*4,d=lum[p]-((dec[k]*77+dec[k+1]*150+dec[k+2]*29)>>8);
+    sum+=d*d;
+  }
+  return 10*Math.log10(65025/Math.max(sum/idx.length,1e-9));
+}
+async function encodeSmart(cv,ctx,t){
+  const w=cv.width,h=cv.height,img=ctx.getImageData(0,0,w,h),a=img.data,n=w*h,lum=new Uint8Array(n);
+  let col=0,ink=0;
+  for(let i=0,k=0;k<n;i+=4,k++){
+    const r=a[i],g=a[i+1],b=a[i+2];
+    lum[k]=(r*77+g*150+b*29)>>8;
+    if(Math.max(r,g,b)-Math.min(r,g,b)>70)col++;
+    if(lum[k]<170)ink++;
+  }
+  const gray=col/n<CONFIG.smart.colorPx;
+  if(gray){for(let i=0,k=0;k<n;i+=4,k++)a[i]=a[i+1]=a[i+2]=lum[k];ctx.putImageData(img,0,0)}
+  const step=Math.max(1,Math.ceil(ink/400000)),all=new Uint32Array(Math.ceil(ink/step)+1);
+  let c=0,m=0;
+  for(let k=0;k<n;k++)if(lum[k]<170){if(c++%step===0)all[m++]=k}
+  const idx=all.subarray(0,m);
+  const enc=q=>new Promise(r=>cv.toBlob(r,'image/jpeg',q));
+  const fail=()=>{throw new Error('تعذّر ترميز الصفحة (الذاكرة غير كافية؟)')};
+  let lo=t.qmin,hi=CONFIG.smart.qmax,best=null,bq=lo;
+  if(m<300){best=await enc(lo);if(!best)fail();return{blob:best,gray,q:lo}}
+  const test=async q=>{const b=await enc(q);if(!b)fail();return[b,inkPsnr(lum,idx,await decodeRGBA(b,w,h))>=t.psnr]};
+  let[b,ok]=await test(lo);
+  if(ok){best=b}
+  else{
+    for(let st=0;st<3;st++){
+      const mid=(lo+hi)/2;
+      [b,ok]=await test(mid);
+      if(ok){best=b;bq=mid;hi=mid}else lo=mid;
+    }
+    if(!best){best=await enc(hi);if(!best)fail();bq=hi}
+  }
+  return{blob:best,gray,q:bq};
+}
+async function estimate(pages,keys){
+  const N=Math.min(CONFIG.smart.samples,pages.length),res={};
+  const pick=Array.from({length:N},(_,j)=>pages[Math.floor((j+.5)*pages.length/N)]);
+  for(const key of keys){
+    let tot=0;
+    for(const p of pick){const pg=await renderPage(p,{smart:CONFIG.smart.tiers[key]},false);tot+=pg.blob.size+260}
+    res[key]=tot/N*pages.length;
+  }
+  return res;
+}
+
 async function renderPage(i,o,withText){
   const page=await doc.getPage(i);
   const v1=page.getViewport({scale:1});
-  const sc=Math.min(3,o.maxSide/Math.max(v1.width,v1.height));
+  const sc=Math.min(3,(o.smart?o.smart.maxSide:o.maxSide)/Math.max(v1.width,v1.height));
   const vp=page.getViewport({scale:sc});
   const cv=document.createElement('canvas');
   cv.width=Math.max(1,Math.round(vp.width));cv.height=Math.max(1,Math.round(vp.height));
-  const ctx=cv.getContext('2d',{willReadFrequently:o.gray});
+  const ctx=cv.getContext('2d',{willReadFrequently:!!(o.gray||o.smart)});
   ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
   await page.render({canvasContext:ctx,viewport:vp}).promise;
-  if(o.gray){
-    const d=ctx.getImageData(0,0,cv.width,cv.height),a=d.data;
-    for(let k=0;k<a.length;k+=4){a[k]=a[k+1]=a[k+2]=(a[k]*77+a[k+1]*150+a[k+2]*29)>>8}
-    ctx.putImageData(d,0,0);
+  let blob,gray=false,q=0;
+  if(o.smart){({blob,gray,q}=await encodeSmart(cv,ctx,o.smart))}
+  else{
+    if(o.gray){
+      const d=ctx.getImageData(0,0,cv.width,cv.height),a=d.data;
+      for(let k=0;k<a.length;k+=4){a[k]=a[k+1]=a[k+2]=(a[k]*77+a[k+1]*150+a[k+2]*29)>>8}
+      ctx.putImageData(d,0,0);gray=true;
+    }
+    blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',o.q));q=o.q;
   }
-  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',o.q));
   if(!blob)throw new Error('تعذّر ترميز الصفحة '+i+' (الذاكرة غير كافية؟ قلّل أطول ضلع)');
   let text='';
   if(withText){try{text=(await page.getTextContent()).items.map(x=>x.str).join(' ').trim()}catch{}}
-  const out={w:+v1.width.toFixed(2),h:+v1.height.toFixed(2),pw:cv.width,ph:cv.height,blob,text};
+  const out={w:+v1.width.toFixed(2),h:+v1.height.toFixed(2),pw:cv.width,ph:cv.height,blob,text,gray,q};
   cv.width=cv.height=0;page.cleanup();
   return out;
 }
@@ -329,8 +418,8 @@ async function openFile(f){
 async function run(){
   let pages;
   try{pages=parsePages($('#range').value,doc.numPages)}catch(e){S.msg=e.message;return}
-  S.msg='';cancelled=false;S.parts=[];S.done=0;S.bytes=0;
-  const o=eff(),maxBytes=Math.max(1,cfg.maxMB)*1048576,maxPages=Math.max(1,cfg.maxPages|0);
+  S.msg='';S.info='';S.label='';cancelled=false;S.parts=[];S.done=0;S.bytes=0;
+  let o,tierKey=cfg.tier,note='';const maxBytes=Math.max(1,cfg.maxMB)*1048576,maxPages=Math.max(1,cfg.maxPages|0);
   const base=(S.name.replace(/\.pdf$/i,'')||'document')+'-small';
   const texts=[];let part=new PdfPart(),finished=0,n=0;
   S.total=pages.length;S.phase='working';
@@ -341,12 +430,25 @@ async function run(){
     part=new PdfPart();
   };
   try{
+    if(cfg.mode==='smart'){
+      if(cfg.targetMB>0){
+        S.label='تقدير الحجم لاختيار المستوى المناسب…';
+        const est=await estimate(pages,CONFIG.smart.order),T=cfg.targetMB*1048576;
+        const hit=CONFIG.smart.order.find(k=>est[k]<=T);
+        tierKey=hit||'small';
+        note=hit?`اختير مستوى «${CONFIG.smart.tiers[tierKey].label}» تلقائياً ليناسب الهدف. `:`حتى أدنى مستوى وضوح آمن (≈ ${fmt(est.small)}) يتجاوز الهدف، فلم أخفّض الوضوح أكثر وقُسّم الملف لأجزاء. `;
+        S.label='';
+      }
+      o={smart:CONFIG.smart.tiers[tierKey]};
+    }else o=eff();
+    let gp=0;
     for(let k=0;k<pages.length;k++){
       if(cancelled)break;
       const pg=await renderPage(pages[k],o,cfg.text);
       if(part.pages.length&&(part.size+pg.blob.size>maxBytes||part.pages.length>=maxPages))flush();
       part.add(pg,pages[k]);
       if(pg.text)texts.push(`=== صفحة ${pages[k]} ===\n${pg.text}`);
+      if(pg.gray)gp++;
       S.done=k+1;S.bytes=finished+part.size;
     }
     if(cancelled){S.phase='ready';S.parts=[];return}
@@ -356,6 +458,7 @@ async function run(){
       S.parts=[...S.parts,{name:base+'-text.txt',blob,meta:'النص المستخرج',txt:true}];
     }
     S.bytes=S.parts.filter(p=>!p.txt).reduce((a,p)=>a+p.blob.size,0);
+    S.info=cfg.mode==='smart'?note+`${gp} صفحة رمادية و${pages.length-gp} ملوّنة حُفظت بألوانها.`:'';
     S.phase='done';buzz([30,40,30]);
   }catch(e){S.phase='ready';S.msg=e.message||'حدث خطأ أثناء الضغط'}
 }
@@ -395,13 +498,13 @@ sub(s=>{
   if(ph==='working'){
     const v=s.total?s.done/s.total:0;
     $('#bar').style.setProperty('--v',v);$('#bar').setAttribute('aria-valuenow',Math.round(v*100));
-    $('#pN').textContent=s.done;$('#pT').textContent=s.total;$('#pS').textContent=fmt(s.bytes);
+    $('#pN').textContent=s.done;$('#pT').textContent=s.total;$('#pS').textContent=fmt(s.bytes);$('#pLabel').textContent=s.label;
   }
   if(ph==='done'&&lastPhase!=='done'){
     $('#rFrom').textContent=fmt(s.size);
     countTo($('#rTo'),s.size,s.bytes);
     const pct=Math.max(0,Math.round((1-s.bytes/s.size)*100));
-    $('#rSave').textContent=`وفّرت ${pct}%`;
+    $('#rSave').textContent=`وفّرت ${pct}%`;$('#rInfo').textContent=s.info;
   }
   if(s.parts!==lastParts){
     lastParts=s.parts;
@@ -420,6 +523,21 @@ sub(s=>{
 });
 
 /* ===== ربط الواجهة ===== */
+function radios(box,name,items,get,set){
+  Object.entries(items).forEach(([k,p])=>{
+    const lb=el('label'),inp=el('input');
+    inp.type='radio';inp.name=name;inp.value=k;inp.style.cssText='position:absolute;opacity:0';
+    const b=el('b'),sm=el('small');b.textContent=p.label;sm.textContent=p.hint;
+    lb.append(inp,b,sm);box.append(lb);
+    inp.onchange=()=>{set(k);syncInputs();saveCfg();buzz(8)};
+  });
+}
+function buildModes(){
+  radios($('#modes'),'mode',{smart:{label:'ذكي',hint:'وضوح مضمون'},manual:{label:'يدوي',hint:'تحكم كامل'}},()=>cfg.mode,k=>{cfg.mode=k});
+}
+function buildTiers(){
+  radios($('#tiers'),'tier',CONFIG.smart.tiers,()=>cfg.tier,k=>{cfg.tier=k});
+}
 function buildPresets(){
   const box=$('#presets');
   Object.entries(CONFIG.presets).forEach(([k,p])=>{
@@ -436,6 +554,11 @@ function syncInputs(){
   $('#q').value=cfg.q;$('#vQ').textContent=cfg.q;
   $('#gray').checked=cfg.gray;$('#text').checked=cfg.text;
   $('#maxMB').value=cfg.maxMB;$('#maxPages').value=cfg.maxPages;
+  document.querySelectorAll('#modes input').forEach(i=>i.checked=i.value===cfg.mode);
+  document.querySelectorAll('#tiers input').forEach(i=>i.checked=i.value===cfg.tier);
+  $('#smartBox').hidden=cfg.mode!=='smart';$('#manualBox').hidden=cfg.mode!=='manual';
+  $('#targetMB').value=cfg.targetMB||'';
+  $('#tiers').style.opacity=cfg.targetMB>0?.45:1;
 }
 function bind(){
   $('#side').oninput=e=>{cfg.maxSide=+e.target.value;cfg.preset='custom';syncInputs();saveCfg()};
@@ -445,6 +568,17 @@ function bind(){
   $('#maxMB').onchange=e=>{cfg.maxMB=Math.max(1,+e.target.value||CONFIG.defaults.maxMB);syncInputs();saveCfg()};
   $('#maxPages').onchange=e=>{cfg.maxPages=Math.max(1,+e.target.value||CONFIG.defaults.maxPages);syncInputs();saveCfg()};
   $('#f').onchange=e=>{openFile(e.target.files[0]);e.target.value=''};
+  $('#targetMB').onchange=e=>{cfg.targetMB=Math.max(0,+e.target.value||0);syncInputs();saveCfg()};
+  $('#estBtn').onclick=async e=>{
+    const b=e.currentTarget,out=$('#est');let pages;
+    try{pages=parsePages($('#range').value,doc.numPages)}catch(x){S.msg=x.message;return}
+    S.msg='';b.disabled=true;out.hidden=false;out.textContent='جارٍ التقدير من عيّنة صفحات…';
+    try{
+      const r=await estimate(pages,CONFIG.smart.order),per=Math.max(1,cfg.maxMB)*1048576;
+      out.textContent=CONFIG.smart.order.map(k=>{const n=Math.ceil(r[k]/per);return `${CONFIG.smart.tiers[k].label}: ≈ ${fmt(r[k])}`+(n>1?` (${n} أجزاء)`:'')}).join('\n');
+    }catch{out.textContent='تعذّر التقدير'}
+    finally{b.disabled=false}
+  };
   $('#go').onclick=()=>{buzz(20);run()};
   $('#cancel').onclick=()=>{cancelled=true};
   $('#again').onclick=()=>{S.parts=[];S.msg='';S.phase='ready'};
@@ -486,6 +620,10 @@ async function selfTest(){
   ok('xref entries',offs.length===3*3+2-0&&offs.every((o,i)=>txt.slice(o).startsWith((i+1)+' 0 obj')));
   ok('eof',txt.trimEnd().endsWith('%%EOF'));
   ok('fmt',fmt(1048576)==='1.0 ميجا'&&fmt(2048)==='2 كيلو');
+  const dec=new Uint8ClampedArray([10,10,10,255,10,10,10,255]);
+  ok('psnr',Math.abs(inkPsnr(new Uint8Array([0,0]),new Uint32Array([0,1]),dec)-28.13)<.05);
+  ok('psnr identical',inkPsnr(new Uint8Array([10,10]),new Uint32Array([0,1]),dec)>=90);
+  ok('tier floors',CONFIG.smart.order.every(k=>CONFIG.smart.tiers[k].qmin<CONFIG.smart.qmax));
   const t=$('#test');t.hidden=false;t.textContent=out.join('\n');
 }
 
@@ -497,7 +635,7 @@ async function selfTest(){
   if(CONFIG.license.expiry&&new Date(CONFIG.license.expiry)<new Date()){
     document.querySelector('main').replaceChildren(el('p','card',[document.createTextNode('انتهت صلاحية الترخيص')]));return;
   }
-  buildPresets();bind();syncInputs();
+  buildModes();buildTiers();buildPresets();bind();syncInputs();
   $('#note').textContent='الناتج صفحات مصوّرة تقرؤها النماذج بالرؤية. الملف الأصلي لا يتغيّر.';
   loadLib().catch(()=>{$('#note').textContent='أول تشغيل يحتاج إنترنت لتحميل مكتبة القراءة (pdf.js).'});
   checkUpdate();
