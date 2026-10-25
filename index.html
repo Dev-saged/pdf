@@ -106,6 +106,20 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 #msg{color:var(--danger);font-weight:500;font-size:.92rem}
 #upd{background:var(--accent);color:oklch(25% .06 135);border-radius:14px;padding:10px 14px;font-weight:600;text-align:center}
 .note{color:var(--mute);font-size:.8rem;text-align:center}
+.foot{margin-top:6px;padding:14px 16px;border:1px solid var(--line);border-radius:22px;background:var(--surface);display:grid;gap:12px}
+.who{display:flex;align-items:center;gap:12px}
+.av{inline-size:44px;block-size:44px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent));color:var(--on-primary);display:grid;place-items:center;font:800 1.2rem var(--f-d);flex:none}
+.who b{display:block;font-weight:600;line-height:1.3}
+.who span{color:var(--mute);font-size:.82rem}
+.lnks{display:flex;flex-wrap:wrap;gap:8px}
+.lk{min-block-size:44px;padding-inline:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);display:inline-flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none;font-weight:500;font-size:.9rem;transition:transform .2s var(--ease)}
+.lk:active{transform:scale(.97)}
+.ver{display:flex;align-items:center;gap:8px;padding-top:12px;border-top:1px solid var(--line);color:var(--mute);font-size:.82rem}
+.ver i{inline-size:9px;block-size:9px;border-radius:50%;background:var(--mute);flex:none}
+.ver b{color:var(--ink);font-variant-numeric:tabular-nums;direction:ltr}
+.ver[data-s=ok] i{background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklch,var(--accent) 30%,transparent)}
+.ver[data-s=new] i{background:oklch(78% .16 70);box-shadow:0 0 0 4px color-mix(in oklch,oklch(78% .16 70) 30%,transparent)}
+.ver[data-s=new] span{color:var(--ink);font-weight:600}
 #test{white-space:pre-wrap;direction:ltr;font:13px/1.6 monospace;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -121,6 +135,9 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9L12 4.5 16.5 9M5 20h14"/></symbol>
   <symbol id="i-txt" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M9 19h6"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24"><circle cx="6" cy="5.5" r="2.2"/><circle cx="6" cy="18.5" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.7v8.6M18 11.2c0 3.6-4 3.2-9.4 5.4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 6l-3 12"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
 </svg>
 
 <main id="app">
@@ -197,6 +214,11 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
   </section>
 
   <p class="note" id="note"></p>
+  <footer class="foot" id="foot">
+    <div class="who"><div class="av" id="av" aria-hidden="true"></div><div><b id="auName"></b><span id="auRole"></span></div></div>
+    <div class="lnks" id="lnks"></div>
+    <div class="ver" id="ver" data-s="off" role="status"><i></i><b id="verNo"></b><span id="verTxt"></span></div>
+  </footer>
   <pre id="test" hidden></pre>
 </main>
 
@@ -205,7 +227,14 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 /* ===== CONFIG ===== */
 const CONFIG={
   brand:{name:'ضاغط PDF',tagline:'صغّر كتابك ليُرفع بسهولة',hue:195},
-  version:'1.1.0',
+  author:{
+    name:'ساجد العبادلة',role:'مطوّر أدوات الويب',
+    links:[
+      {label:'GitHub',url:'https://github.com/Dev-saged',icon:'i-gh'},
+      {label:'المستودع',url:'https://github.com/Dev-saged/pdf',icon:'i-code'}
+    ]
+  },
+  version:'1.2.0',
   updateUrl:'https://raw.githubusercontent.com/Dev-saged/pdf/main/version.json',
   license:{expiry:null},      // 'YYYY-MM-DD' أو null
   cdn:{
@@ -589,16 +618,34 @@ function bind(){
 }
 
 /* ===== تحديث تلقائي ===== */
+function setVer(st,txt){$('#ver').dataset.s=st;$('#verTxt').textContent=txt}
 async function checkUpdate(){
+  $('#verNo').textContent='v'+CONFIG.version;
   if(!CONFIG.updateUrl)return;
+  setVer('off','جارٍ التحقق…');
   try{
-    const r=await fetch(CONFIG.updateUrl,{cache:'no-store'});if(!r.ok)return;
-    const v=(await r.json()).version||'';
-    const a=v.split('.').map(Number),b=CONFIG.version.split('.').map(Number);
-    if(a.some((x,i)=>x!==b[i])&&(a[0]-b[0]||a[1]-b[1]||a[2]-b[2])>0){
-      const u=$('#upd');u.textContent='يتوفر إصدار أحدث: '+v;u.hidden=false;
-    }
-  }catch{}
+    const r=await fetch(CONFIG.updateUrl,{cache:'no-store'});if(!r.ok)throw 0;
+    const v=String((await r.json()).version||''),a=v.split('.').map(Number),b=CONFIG.version.split('.').map(Number);
+    if((a[0]-b[0]||a[1]-b[1]||a[2]-b[2])>0){
+      const u=$('#upd');u.textContent='يتوفر إصدار أحدث: v'+v;u.hidden=false;
+      setVer('new','يتوفر تحديث v'+v);
+    }else setVer('ok','أنت على أحدث إصدار');
+  }catch{setVer('off','تعذّر التحقق (غير متصل)')}
+}
+
+function buildFoot(){
+  const a=CONFIG.author;
+  $('#av').textContent=a.name.trim().charAt(0);
+  $('#auName').textContent=a.name;$('#auRole').textContent=a.role;
+  const box=$('#lnks');
+  a.links.filter(l=>/^https:\/\//.test(l.url)).forEach(l=>{
+    const e=document.createElement('a');
+    e.className='lk';e.href=l.url;e.target='_blank';e.rel='noopener noreferrer';
+    const t=document.createElement('span');t.textContent=l.label;
+    e.append(icon(l.icon||'i-link'),t);box.append(e);
+  });
+  $('#verNo').textContent='v'+CONFIG.version;
+  setVer('off','');
 }
 
 /* ===== اختبار ذاتي (#test) ===== */
@@ -635,7 +682,7 @@ async function selfTest(){
   if(CONFIG.license.expiry&&new Date(CONFIG.license.expiry)<new Date()){
     document.querySelector('main').replaceChildren(el('p','card',[document.createTextNode('انتهت صلاحية الترخيص')]));return;
   }
-  buildModes();buildTiers();buildPresets();bind();syncInputs();
+  buildFoot();buildModes();buildTiers();buildPresets();bind();syncInputs();
   $('#note').textContent='الناتج صفحات مصوّرة تقرؤها النماذج بالرؤية. الملف الأصلي لا يتغيّر.';
   loadLib().catch(()=>{$('#note').textContent='أول تشغيل يحتاج إنترنت لتحميل مكتبة القراءة (pdf.js).'});
   checkUpdate();
