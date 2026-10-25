@@ -12,28 +12,29 @@
 <style>
 :root{
   color-scheme:light dark;--h:195;
-  --bg:light-dark(oklch(97% .012 var(--h)),oklch(17% .025 var(--h)));
-  --surface:light-dark(oklch(100% 0 0),oklch(22% .03 var(--h)));
-  --surface-2:light-dark(oklch(95% .015 var(--h)),oklch(27% .03 var(--h)));
-  --ink:light-dark(oklch(22% .03 var(--h)),oklch(95% .01 var(--h)));
-  --mute:light-dark(oklch(46% .03 var(--h)),oklch(76% .03 var(--h)));
-  --line:light-dark(oklch(89% .02 var(--h)),oklch(33% .03 var(--h)));
-  --primary:light-dark(oklch(48% .12 var(--h)),oklch(80% .13 var(--h)));
-  --on-primary:light-dark(#fff,oklch(18% .03 var(--h)));
+  --bg:oklch(97% .012 var(--h));
+  --surface:oklch(100% 0 0);
+  --surface-2:oklch(95% .015 var(--h));
+  --ink:oklch(22% .03 var(--h));
+  --mute:oklch(46% .03 var(--h));
+  --line:oklch(89% .02 var(--h));
+  --primary:oklch(48% .12 var(--h));
+  --on-primary:#fff;
   --accent:oklch(82% .19 135);
-  --danger:light-dark(oklch(50% .2 25),oklch(75% .15 25));
+  --danger:oklch(50% .2 25);
   --ease:cubic-bezier(.22,1,.36,1);
   --f-d:'Alexandria',system-ui,sans-serif;--f-b:'IBM Plex Sans Arabic',system-ui,sans-serif;--f-n:'El Messiri','Alexandria',system-ui,sans-serif;
 }
+@media (prefers-color-scheme:dark){:root{--bg:oklch(17% .025 var(--h));--surface:oklch(22% .03 var(--h));--surface-2:oklch(27% .03 var(--h));--ink:oklch(95% .01 var(--h));--mute:oklch(76% .03 var(--h));--line:oklch(33% .03 var(--h));--primary:oklch(80% .13 var(--h));--on-primary:oklch(18% .03 var(--h));--danger:oklch(75% .15 25)}}
 *{box-sizing:border-box;margin:0}
 html{-webkit-text-size-adjust:100%}
-body{font:400 clamp(.95rem,.9rem + .3vw,1.05rem)/1.7 var(--f-b);background:var(--bg);color:var(--ink);min-height:100dvh;overflow-x:hidden;padding-block:max(16px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-bottom))}
+body{font:400 clamp(.95rem,.9rem + .3vw,1.05rem)/1.7 var(--f-b);background:var(--bg);color:var(--ink);min-height:100vh;min-height:100dvh;overflow-x:hidden;padding-block:max(16px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-bottom))}
 .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .bg i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(70px);opacity:.35;will-change:transform;animation:drift 22s ease-in-out infinite alternate}
 .bg i:nth-child(1){background:oklch(75% .12 var(--h));inset-block-start:-25vmax;inset-inline-start:-20vmax}
 .bg i:nth-child(2){background:oklch(82% .17 135);inset-block-end:-30vmax;inset-inline-end:-25vmax;animation-delay:-8s;opacity:.22}
 @keyframes drift{to{transform:translate3d(8vmax,6vmax,0) scale(1.15)}}
-main{max-width:560px;margin-inline:auto;padding-inline:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+main{max-width:560px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 header{display:flex;align-items:center;gap:12px;padding-block:6px}
 .mark{inline-size:44px;block-size:44px;border-radius:14px;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;flex:none}
 h1{font:800 1.3rem/1.2 var(--f-d)}
@@ -93,7 +94,8 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 .big{font:800 clamp(1.5rem,6vw,2rem)/1.2 var(--f-d);display:flex;flex-wrap:wrap;align-items:center;gap:8px;direction:ltr;justify-content:center;font-variant-numeric:tabular-nums}
 .big .arr{color:var(--mute);inline-size:20px;block-size:20px}
 .save{display:inline-block;margin-inline:auto;background:var(--accent);color:oklch(25% .06 135);font-weight:700;padding:4px 14px;border-radius:99px;font-size:.95rem}
-.part{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:16px;padding:10px 12px}
+#parts{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.part{min-inline-size:0;display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:16px;padding:10px 12px}
 .part div{flex:1;min-inline-size:0}
 .part b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:start}
 .part span{color:var(--mute);font-size:.82rem}
@@ -108,8 +110,9 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 .av svg{inline-size:27px;block-size:27px;stroke-width:1.7}
 .who b{display:block;font:700 1.2rem/1.25 var(--f-n);letter-spacing:.01em}
 .who span{color:var(--mute);font-size:.82rem}
-.lnks{display:flex;flex-wrap:wrap;gap:8px}
-.lk{inline-size:44px;block-size:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center;color:light-dark(oklch(50% var(--lc,.17) var(--lh,195)),oklch(78% var(--lc,.15) var(--lh,195)));transition:transform .25s var(--ease),border-color .2s}
+.lnks{display:flex;flex-wrap:nowrap;gap:6px}
+.lk{flex:1 1 0;min-inline-size:34px;max-inline-size:44px;aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center;color:oklch(50% var(--lc,.17) var(--lh,195));transition:transform .25s var(--ease),border-color .2s}
+@media (prefers-color-scheme:dark){.lk{color:oklch(78% var(--lc,.15) var(--lh,195))}}
 .lk:hover{border-color:currentColor;transform:translateY(-2px)}
 .lk:active{transform:scale(.93)}
 .ver{display:flex;align-items:center;gap:8px;padding-top:12px;border-top:1px solid var(--line);color:var(--mute);font-size:.82rem}
@@ -135,7 +138,7 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 .ring b{position:absolute;inset:0;display:grid;place-items:center;font:800 1.15rem var(--f-d);font-variant-numeric:tabular-nums}
 .kv{flex:1;display:grid;gap:6px;min-inline-size:0}
 .kv div{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;color:var(--mute)}
-.kv b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600;direction:ltr}
+.kv b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600;direction:ltr;white-space:nowrap}
 .kv i{font-style:normal}
 .spark{inline-size:100%;block-size:40px;direction:ltr}
 .spark path:first-child{fill:color-mix(in oklch,var(--primary) 18%,transparent)}
@@ -153,7 +156,7 @@ details>div{display:grid;gap:14px;padding-block:4px 16px}
 .chk p{color:var(--mute);font-size:.8rem;margin-bottom:8px}
 .car{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-block:2px 6px;direction:ltr}
 .btn:disabled,.ic:disabled{opacity:.4}
-dialog{border:none;padding:0;inline-size:min(96vw,640px);block-size:min(92dvh,900px);border-radius:22px;background:var(--surface);color:var(--ink);overflow:hidden;margin:auto}
+dialog{border:none;padding:0;inline-size:min(96vw,640px);block-size:min(92vh,900px);block-size:min(92dvh,900px);border-radius:22px;background:var(--surface);color:var(--ink);overflow:hidden;margin:auto}
 dialog[open]{display:grid;grid-template-rows:auto 1fr auto;animation:in .3s var(--ease)}
 dialog::backdrop{background:oklch(10% .02 var(--h) / .7);backdrop-filter:blur(6px)}
 .dh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -164,6 +167,13 @@ dialog::backdrop{background:oklch(10% .02 var(--h) / .7);backdrop-filter:blur(6p
 .dn{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
 .dn .btn{flex:1}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.3s}
+@media (max-width:359px){
+  .card{padding:14px}.pg{gap:12px}
+  .ring{inline-size:78px;block-size:78px}.ring b{font-size:1rem}
+  .kv div{font-size:.8rem}
+  .seg{gap:6px}.seg b{font-size:.82rem}.seg small{font-size:.68rem}
+  h1{font-size:1.15rem}
+}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -257,7 +267,7 @@ dialog::backdrop{background:oklch(10% .02 var(--h) / .7);backdrop-filter:blur(6p
       <div class="kv">
         <div><span>الصفحات</span><b><i id="pN">0</i> / <i id="pT">0</i></b></div>
         <div><span>الحجم الحالي</span><b id="pS">0</b></div>
-        <div><span>الحجم النهائي المتوقع</span><b id="pE">-</b></div>
+        <div><span>الحجم المتوقع</span><b id="pE">-</b></div>
         <div><span>الوقت المتبقي</span><b id="pR">-</b></div>
       </div>
     </div>
@@ -272,7 +282,7 @@ dialog::backdrop{background:oklch(10% .02 var(--h) / .7);backdrop-filter:blur(6p
     <span class="save" id="rSave"></span>
     <p class="note" id="rInfo"></p>
     <div class="chk" id="chk" hidden><h2>افحص الوضوح بنفسك</h2><p>اضغط على أي صفحة لتكبيرها والتأكد من وضوح الخط.</p><div class="car" id="car"></div></div>
-    <div id="parts" style="display:grid;gap:8px"></div>
+    <div id="parts"></div>
     <button class="btn" id="again" type="button">ملف جديد</button>
   </section>
 
@@ -314,7 +324,7 @@ const CONFIG={
       {label:'المستودع',url:'https://github.com/Dev-saged/pdf',icon:'i-code',lh:195,lc:.12}
     ]
   },
-  version:'1.3.0',
+  version:'1.3.1',
   updateUrl:'https://raw.githubusercontent.com/Dev-saged/pdf/main/version.json',
   license:{expiry:null},      // 'YYYY-MM-DD' أو null
   cdn:{
@@ -538,7 +548,7 @@ async function run(){
   const flush=()=>{
     if(!part.pages.length)return;
     n++;const blob=part.build();finished+=blob.size;
-    S.parts=[...S.parts,{name:`${base}-${String(n).padStart(2,'0')}.pdf`,blob,meta:`الصفحات ${part.first}–${part.last}`}];
+    S.parts=[...S.parts,{name:`${base}-${String(n).padStart(2,'0')}.pdf`,blob,meta:`الصفحات ${part.first} إلى ${part.last}`}];
     part=new PdfPart();
   };
   try{
